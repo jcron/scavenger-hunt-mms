@@ -1,4 +1,4 @@
-MMS based Scavenger hunt using Sinatra and Twilio MMS.
+# MMS based Scavenger hunt using Sinatra and Twilio MMS.
 
 # install postgres
 # (on mac)
