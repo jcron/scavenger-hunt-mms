@@ -13,7 +13,7 @@ include ERB::Util
 
 # Using DataMapper for our psql data manager
 DataMapper::Logger.new(STDOUT, :debug)
-DataMapper::setup(:default, ENV['DATABASE_URL'] || 'postgres://localhost/jreyes')
+DataMapper::setup(:default, ENV['DATABASE_URL'] || 'postgres://localhost/scavenger')
 
 class Player
   include DataMapper::Resource
@@ -37,7 +37,8 @@ DataMapper.auto_upgrade!
 
 # Load up our necessary requirements before each function
 before do
-  @ronin_number = ENV['RONIN_NUMBER']
+  @url = 'http://scavenger.ngrok.com/img/' # replace this below
+  @twilio_number = ENV['TWILIO_NUMBER']
   @client = Twilio::REST::Client.new ENV['TWILIO_ACCOUNT_SID'], ENV['TWILIO_AUTH_TOKEN']
   if params[:error].nil?
     @error = false
@@ -55,77 +56,77 @@ $CLUES = {
   "clue1" => {
     "keyword" => 'boygeorge',
     "title" => 'Humdinger of a clue',
-    "url" => 'http://jreyes.ngrok.com/img/clue01.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue01.jpg'
   },
   "clue2" => {
     "keyword" => 'scumbucket',
     "title" => 'Let this clue float in your head for a bit.',
-    "url" => 'http://jreyes.ngrok.com/img/clue02.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue02.jpg'
   },
   "clue3" => {
     "keyword" => 'billieidol',
     "title" => 'Wood you be my neighbor?',
-    "url" => 'http://jreyes.ngrok.com/img/clue03.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue03.jpg'
   },
   "clue4" => {
     "keyword" => 'erasure',
     "title" => 'Time to hunt!',
-    "url" => 'http://jreyes.ngrok.com/img/clue04.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue04.jpg'
   },
   "clue5" => {
     "keyword" => 'blondie',
     "title" => 'Can you handle this?',
-    "url" => 'http://jreyes.ngrok.com/img/clue05.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue05.jpg'
   },
   "clue6" => {
     "keyword" => 'cinderella',
     "title" => 'Your days are numbered...',
-    "url" => 'http://jreyes.ngrok.com/img/clue06.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue06.jpg'
   },
   "clue7" => {
     "keyword" => 'joejackson',
     "title" => 'Your inability to find these clues is grating on me.',
-    "url" => 'http://jreyes.ngrok.com/img/clue07.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue07.jpg'
   },
   "clue8" => {
     "keyword" => 'onedirection',
     "title" => 'Your progress is a bad sign.',
-    "url" => 'http://jreyes.ngrok.com/img/clue08.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue08.jpg'
   },
   "clue9" => {
     "keyword" => 'wildfire',
     "title" => 'Wash away your fears',
-    "url" => 'http://jreyes.ngrok.com/img/clue09.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue09.jpg'
   },
   "clue10" => {
     "keyword" => 'slowmo',
     "title" => 'Are you getting tired of this?',
-    "url" => 'http://jreyes.ngrok.com/img/clue10.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue10.jpg'
   },
   "clue11" => {
     "keyword" => 'dummy',
     "title" => 'The wicked clue is dead?',
-    "url" => 'http://jreyes.ngrok.com/img/clue11.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue11.jpg'
   },
   "clue12" => {
     "keyword" => 'fakeplastic',
     "title" => 'Rock on dude!',
-    "url" => 'http://jreyes.ngrok.com/img/clue12.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue12.jpg'
   },
   "clue13" => {
     "keyword" => 'menatwork',
     "title" => 'Keep looking!',
-    "url" => 'http://jreyes.ngrok.com/img/clue13.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue13.jpg'
   },
   "clue14" => {
     "keyword" => 'duran',
     "title" => 'Dont lean on your senses.',
-    "url" => 'http://jreyes.ngrok.com/img/clue14.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue14.jpg'
   },
   "clue15" => {
     "keyword" => 'jazzyjeff',
     "title" => 'Let cooler heads prevail.',
-    "url" => 'http://jreyes.ngrok.com/img/clue15.jpg'
+    "url" => 'http://scavenger.ngrok.com/img/clue15.jpg'
   },
 }
 
@@ -141,7 +142,7 @@ get '/scavenger/?' do
   if @player.nil?
     # for the time being we create the code at the start of the game
     # TODO - Instead of creating user with code, allow user to submit their code to the listener as first step of signup. Then we assign code to user at the Real-world Event. That way we can hand out stickers, badges, with the code pre-written. 
-    @player = createUser(@phone_number)
+    @player = create_user(@phone_number)
   end
 
   begin
@@ -165,7 +166,7 @@ get '/scavenger/?' do
           puts "RECEIVED MESSAGE of YES"
           output = "Ok #{@player.name}, time to go find your first clue! You should receive a picture of it shortly. Once you find the object send back the word clue to this number."
           @player.update(:status => 'hunting')
-          sendNextClue(@player)
+          send_next_clue(@player)
         else
           output = "Okay safari dude. What is your nickname then?"
           @player.update(:name => nil)
@@ -179,7 +180,7 @@ get '/scavenger/?' do
         else
           output = "Hiddey Ho #{@player.name}, you look a little messed up from your injury, you should probably get that checked out. Anyway, here is the next picture clue!"
           @player.update(:status => 'hunting')
-          sendNextClue(@player)
+          send_next_clue(@player)
         end
 
     # When the user is hunting
@@ -216,12 +217,12 @@ get '/scavenger/?' do
             @player.update(:complete => complete, :remaining => remaining.join(','), :time_complete => currentTime)
             if remaining.length == 0
               minutes = @player.fastest / 60
-              output = "Congratulations #{@player.name}! You've finished the game and found #{@player.complete} clues! Your fastest time was #{@minutes}, which is pretty good! Now just wait for the others to finish and a special rewards ceremony."
+              output = "Congratulations #{@player.name}! You've finished the game and found #{@player.complete} clues! Your fastest time was #{minutes} minutes, which is pretty good! Now just wait for the others to finish and a special rewards ceremony."
             else
               output = "Well done #{@player.name}! You've just found a treasure! Now here's the next clue!"
               
               # Get next clue and send it.
-              sendNextClue(@player)
+              send_next_clue(@player)
             end
 
           else
@@ -249,7 +250,7 @@ get '/scavenger/?' do
   end
 end
 
-def sendNextClue(user)
+def send_next_clue(user)
   remaining = user.remaining
   remaining = remaining.split(',')
 
@@ -259,25 +260,23 @@ def sendNextClue(user)
   clue = $CLUES[next_clue]
   puts $CLUES
 
-  sendPicture(@phone_number, clue['title'], clue['url'])
+  send_picture(@phone_number, clue['title'], clue['url'])
 
   @player.update(:current => next_clue)
 end
 
 def time_diff(start_time, end_time)
-  seconds = (start_time - end_time).to_i.abs
-  return seconds
+  (start_time - end_time).to_i.abs
 end
 
-def getRandomStep()
+def get_random_step
   num = rand(12)
-  status = "clue#{num}"
-  return status
+  "clue#{num}"
 end
 
-def sendPicture(to, msg, media)
+def send_picture(to, msg, media)
   message = @client.account.messages.create(
-    :from => ENV['RONIN_NUMBER'],
+    :from => ENV['TWILIO_NUMBER'],
     :to => @phone_number,
     :body => msg,
     :media_url => media,
@@ -285,15 +284,15 @@ def sendPicture(to, msg, media)
   puts message.to
 end
 
-def createUser(phone_number)
-  @AVAILABLE_CLUES = ["clue1", "clue2", "clue3", "clue4", "clue5", "clue6", "clue7", "clue8", "clue9", "clue10", "clue11", "clue12", "clue13", "clue14", "clue15"]
-  clues = @AVAILABLE_CLUES.join(',')
+def create_user(phone_number)
+  @available_clues = ["clue1", "clue2", "clue3", "clue4", "clue5", "clue6", "clue7", "clue8", "clue9", "clue10", "clue11", "clue12", "clue13", "clue14", "clue15"]
+  clues = @available_clues.join(',')
   user = Player.create(
     :phone_number => phone_number,
     :remaining => clues,
   )
   user.save
-  return user
+  user
 end
 
 get "/" do
