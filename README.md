@@ -41,6 +41,6 @@ ngrok -subdomain=scavenger 4567
 
 \#\#\# bug when recovering from injury - doesn't count that clue as completed
 
-\#\#\# bug printing fastest time in final text message - came as blank
-
 \#\#\# bug on users page - doesn't say when completed
+
+\#\#\# there is a step to clear the database when done, not sure what that is yet though
