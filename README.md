@@ -44,3 +44,5 @@ ngrok -subdomain=scavenger 4567
 \#\#\# bug on users page - doesn't say when completed
 
 \#\#\# there is a step to clear the database when done, not sure what that is yet though
+
+\#\#\# Don't let them text anymore when the game is over
